@@ -1,20 +1,70 @@
 import {
   Dimensions,
+  NativeSyntheticEvent,
   StyleSheet,
   Text,
   TextInput,
+  TextInputChangeEventData,
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomInput from "@/components/CustomInput";
 import Checkbox from "expo-checkbox";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { User } from "@/redux/slices/userSlice";
+import { register } from "@/redux/apiCalls";
 
 export default function AuthIndex() {
   const windowHeight = Dimensions.get("window").height;
+  const user = useSelector((state: RootState) =>
+    state.user.currentUser === null ? null : state.user.currentUser
+  );
+  const isLoading = useSelector((state: RootState) =>
+    state.user.isFetching === null ? null : state.user.isFetching
+  );
+  const errorMessage = useSelector((state: RootState) =>
+    state.user.error === null ? null : state.user.error
+  );
+  const dispatch = useDispatch();
+
+  const [values, setValues] = useState<User>({
+    address: "",
+    email: "",
+    fullname: "",
+    phoneNumber: "",
+    password: "",
+  });
+
+  const [terms, setTerms] = useState<boolean>(true);
+
+  const onChange = (name: string, e: string) => {
+    setValues((prevValues) => ({ ...prevValues, [name]: e }));
+  };
+
+  const onValueChange = (e: boolean) => {
+    setTerms(e);
+  };
+
+  // useEffect(() => {
+  //   if (user) {
+  //     router.replace("/(auth)/permissions");
+  //   }
+  // }, [user, router]);
+
+  const handleSubmit = async () => {
+    try {
+      if (terms == true) {
+        register(dispatch, { ...values });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -51,12 +101,38 @@ export default function AuthIndex() {
             paddingHorizontal: 16,
           }}
         >
-          <CustomInput placeholder="Kurosaki Ichigo" />
-          <CustomInput placeholder="Email address" />
-          <CustomInput placeholder="Phone number" />
-          <CustomInput placeholder="Home address" />
-          <CustomInput placeholder="Password" />
-          <CustomInput placeholder="Confirm Password" />
+          <CustomInput
+            onChange={(e) => onChange("fullname", e)}
+            placeholder="Kurosaki Ichigo"
+            keyboardType="default"
+            value={values["fullname"]}
+          />
+          <CustomInput
+            onChange={(e) => onChange("email", e)}
+            placeholder="Email address"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={values["email"]}
+          />
+          <CustomInput
+            onChange={(e) => onChange("phoneNumber", e)}
+            placeholder="Phone number"
+            keyboardType="phone-pad"
+            value={values["phoneNumber"]}
+          />
+          <CustomInput
+            onChange={(e) => onChange("address", e)}
+            placeholder="Home address"
+            keyboardType="default"
+            value={values["address"]}
+          />
+          <CustomInput
+            onChange={(e) => onChange("password", e)}
+            placeholder="Password"
+            secureTextEntry={true}
+            value={values["password"]}
+          />
+          <CustomInput secureTextEntry={true} placeholder="Confirm Password" />
           <View
             style={{
               flexDirection: "row",
@@ -65,36 +141,37 @@ export default function AuthIndex() {
               marginTop: 20,
             }}
           >
-            <Checkbox />
+            <Checkbox value={terms} onValueChange={(e) => onValueChange(e)} />
             <Text style={{ color: "#7a7a7a" }}>
               I agree to the terms stated below
             </Text>
           </View>
           <View style={{ alignItems: "center" }}>
-            <Link href={"/permissions"} asChild>
-              <TouchableOpacity
+            {/* <Link href={"/permissions"} asChild> */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#171717",
+                borderWidth: 1,
+                borderRadius: 32,
+                paddingVertical: 16,
+                paddingHorizontal: 36,
+                borderColor: "#7a7a7a25",
+                marginTop: 26,
+              }}
+              onPress={handleSubmit}
+            >
+              <Text
                 style={{
-                  backgroundColor: "#171717",
-                  borderWidth: 1,
-                  borderRadius: 32,
-                  paddingVertical: 16,
-                  paddingHorizontal: 36,
-                  borderColor: "#7a7a7a25",
-                  marginTop: 26,
+                  color: "#7a7a7a",
+                  fontSize: 15,
+                  fontWeight: "500",
+                  lineHeight: 22.5,
                 }}
               >
-                <Text
-                  style={{
-                    color: "#7a7a7a",
-                    fontSize: 15,
-                    fontWeight: "500",
-                    lineHeight: 22.5,
-                  }}
-                >
-                  SUBMIT AND REGISTER
-                </Text>
-              </TouchableOpacity>
-            </Link>
+                SUBMIT AND REGISTER
+              </Text>
+            </TouchableOpacity>
+            {/* </Link> */}
           </View>
         </LinearGradient>
 

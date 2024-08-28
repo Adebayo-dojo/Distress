@@ -11,11 +11,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import * as Contacts from "expo-contacts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { updateUser } from "@/redux/apiCalls";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 export default function SelectContacts() {
   const [contacts, setContacts] = useState<Contacts.Contact[]>([]);
@@ -24,6 +27,27 @@ export default function SelectContacts() {
     []
   );
   const [lastContact, setLastContact] = useState<Contacts.Contact>();
+  const [searchTerm, setSearchTerm] = useState("");
+  const user = useSelector((state: RootState) =>
+    state.user.currentUser === null ? null : state.user.currentUser
+  );
+  const isLoading = useSelector((state: RootState) =>
+    state.user.isFetching === null ? null : state.user.isFetching
+  );
+  const errorMessage = useSelector((state: RootState) =>
+    state.user.error === null ? null : state.user.error
+  );
+  console.log(user);
+  const dispatch = useDispatch();
+
+  const filteredContacts = useCallback(() => {
+    return contacts.filter(
+      (contact) =>
+        contact.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.phoneNumbers[0].digits?.includes(searchTerm)
+    );
+  }, [contacts, searchTerm]);
 
   const selectContact = (newContact: Contacts.Contact) => {
     if (selectedContacts.length == 3) {
@@ -75,14 +99,42 @@ export default function SelectContacts() {
             style: "cancel",
             onPress: () => deselectContact(lastContact),
           },
-          { text: "Yes", onPress: navigateToHomeScreen },
+          { text: "Yes", onPress: addEmergencyContacts },
         ]
       );
     }
   }, [selectedContacts]);
 
+  const addEmergencyContacts = async () => {
+    try {
+      const filteredSelectedContacts = selectedContacts.map((item) => {
+        return {
+          name: item.name,
+          firstName: item.firstName,
+          lastName: item.lastName,
+          emails: item.emails?.map((item) => {
+            return item.email;
+          }),
+          phoneNumbers: item.phoneNumbers?.map((item) => {
+            return {
+              number: item.number,
+              digits: item.digits,
+              countryCode: item.countryCode,
+            };
+          }),
+        };
+      });
+      await updateUser(dispatch, user?._id, {
+        emergencyContacts: filteredSelectedContacts,
+      });
+      navigateToHomeScreen();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const navigateToHomeScreen = () => {
-    router.replace("/(screens)/");
+    router.replace("/(screens)/screenIndex");
   };
 
   const openSettings = () => {
@@ -174,7 +226,7 @@ export default function SelectContacts() {
               marginTop: 12,
             }}
           >
-            {selectedContacts?.map((contact) => (
+            {selectedContacts?.map((contact, index) => (
               <TouchableOpacity
                 onPress={() => deselectContact(contact)}
                 style={{
@@ -182,6 +234,7 @@ export default function SelectContacts() {
                   justifyContent: "space-between",
                   alignItems: "center",
                 }}
+                key={index}
               >
                 <View style={{ flexDirection: "row", gap: 16 }}>
                   <View>
@@ -251,11 +304,13 @@ export default function SelectContacts() {
               placeholder="Search your contacts"
               placeholderTextColor={"#7a7a7a40"}
               style={{ fontSize: 16, lineHeight: 21, color: "#e9e9e9" }}
+              value={searchTerm}
+              onChangeText={(e) => setSearchTerm(e)}
             />
           </View>
 
           <ScrollView style={{ flex: 1, paddingTop: 18 }}>
-            {contacts?.map((contact) => (
+            {filteredContacts()?.map((contact, index) => (
               <TouchableOpacity
                 onPress={() => selectContact(contact)}
                 style={{
@@ -265,6 +320,7 @@ export default function SelectContacts() {
                   marginBottom: 18,
                   paddingHorizontal: 16,
                 }}
+                key={index}
               >
                 <View style={{ flexDirection: "row", gap: 16 }}>
                   <View>

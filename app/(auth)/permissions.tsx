@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import PermissionButton from "@/components/PermissionButton";
 import * as Contacts from "expo-contacts";
 import * as Location from "expo-location";
+import * as Brightness from "expo-brightness";
 import { Audio } from "expo-av";
 import { useCameraPermissions } from "expo-camera";
 import { Link, router } from "expo-router";
@@ -26,6 +27,8 @@ export default function Permissions() {
     useCameraPermissions();
   const [locationPermissionResponse, requestLocationPermission] =
     Location.useForegroundPermissions();
+  const [brightnessPermissionResponse, requestBrightnessPermission] =
+    Brightness.usePermissions();
   const [contactPermissionStatus, setContactPermissionStatus] =
     useState<Contacts.PermissionStatus>(Contacts.PermissionStatus.UNDETERMINED);
   const [permissionsChecked, setPermissionsChecked] = useState(false);
@@ -109,6 +112,21 @@ export default function Permissions() {
     }
   };
 
+  const requestBrightness = async () => {
+    if (brightnessPermissionResponse?.status !== "granted") {
+      // console.log("tested");
+      // await requestLocationPermission();
+      Alert.alert(
+        "Brightness Permission Required",
+        "This app needs access to your brightness. Please grant permission in the app settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: openSettings },
+        ]
+      );
+    }
+  };
+
   const openSettings = () => {
     // if (Platform.OS === "ios") {
     //   Linking.openURL("app-settings:");
@@ -144,6 +162,10 @@ export default function Permissions() {
         if (locationPermissionResponse?.status !== "granted") {
           console.log("requesting location permission");
           await requestLocationPermission();
+        }
+        if (brightnessPermissionResponse?.status !== "granted") {
+          console.log("requesting brightness permission");
+          await requestBrightnessPermission();
         }
         if (contactPermissionStatus !== "granted") {
           console.log("trying to request contact permission");
@@ -184,6 +206,7 @@ export default function Permissions() {
       audioPermissionResponse?.status !== "granted" ||
       cameraPermissionResponse?.status !== "granted" ||
       locationPermissionResponse?.status !== "granted" ||
+      brightnessPermissionResponse?.status !== "granted" ||
       contactPermissionStatus !== "granted"
     ) {
       setPermissionsChecked(false);
@@ -194,6 +217,7 @@ export default function Permissions() {
     audioPermissionResponse?.status,
     cameraPermissionResponse?.status,
     locationPermissionResponse?.status,
+    brightnessPermissionResponse?.status,
     contactPermissionStatus,
   ]);
 
@@ -287,6 +311,12 @@ export default function Permissions() {
             <PermissionButton
               requestPermission={() => requestMicrophone()}
               text={"ALLOW ACCESS TO YOUR MICROPHONE"}
+            />
+          ) : null}
+          {brightnessPermissionResponse?.status !== "granted" ? (
+            <PermissionButton
+              requestPermission={() => requestBrightness()}
+              text={"ALLOW ACCESS TO YOUR BRIGHTNESS"}
             />
           ) : null}
         </View>
