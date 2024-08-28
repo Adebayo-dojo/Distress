@@ -8,6 +8,7 @@ export default function AuthLayout() {
   const user = useSelector((state: RootState) =>
     state.user.currentUser === null ? null : state.user.currentUser
   );
+  console.log(user);
   return (
     <Stack>
       {!user ? (

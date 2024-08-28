@@ -28,7 +28,7 @@ export default function HomeScreen() {
   const windowHeight = Dimensions.get("window").height;
   const [emergency, setEmergency] = useState(false);
   const [emergencyId, setEmergencyId] = useState();
-  const [receivedEmergency, setReceivedEmergency] = useState(false);
+  const [receivedEmergency, setReceivedEmergency] = useState(true);
   const [receivedEmergencies, setReceivedEmergencies] = useState<any[]>([]);
   const [toast, setToast] = useState(false);
   const [mostRecentEmergency, setMostRecentEmergency] = useState();
@@ -105,6 +105,7 @@ export default function HomeScreen() {
     try {
       // const location = await requestLocation();
       const res = await api.post("/emergency", {
+        userId: user?._id,
         emergencyData: { batteryLevel: batteryLevel, location: location },
       });
       // console.log(res.data);
@@ -124,18 +125,22 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await api.get(`/emergency/${user?._id}`);
-      const emergencies = res.data;
-      setReceivedEmergencies((prevData) => {
-        // Filter out items that already exist in the previous data
-        const uniqueNewData = emergencies.filter(
-          (newItem: any) =>
-            !prevData?.some((existingItem) => existingItem.id === newItem.id)
-        );
+      try {
+        const res = await api.get(`/emergency/${user?._id}`);
+        const emergencies = res.data;
+        setReceivedEmergencies((prevData) => {
+          // Filter out items that already exist in the previous data
+          const uniqueNewData = emergencies.filter(
+            (newItem: any) =>
+              !prevData?.some((existingItem) => existingItem.id === newItem.id)
+          );
 
-        // Combine the existing data with the unique new data
-        return [...prevData, ...uniqueNewData];
-      });
+          // Combine the existing data with the unique new data
+          return [...prevData, ...uniqueNewData];
+        });
+      } catch (err) {
+        console.log(err, user?._id);
+      }
     };
 
     // Fetch data every second
@@ -391,7 +396,7 @@ export default function HomeScreen() {
             >
               Your contact{" "}
               <Text style={{ color: "#e9e9e9", fontWeight: "700" }}>
-                @adetoun
+                @Adebayo
               </Text>{" "}
               is in an emergency
             </Text>
