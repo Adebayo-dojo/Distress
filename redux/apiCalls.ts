@@ -6,6 +6,12 @@ import {
   updateUserStart,
   updateUserSuccess,
   updateUserFailure,
+  logoutStart,
+  logoutSuccess,
+  logoutFailure,
+  loginStart,
+  loginSucess,
+  loginFailure,
 } from "@/redux/slices/userSlice";
 import { api } from "@/axios";
 import { AppDispatch } from "./store";
@@ -19,7 +25,32 @@ export const register = async (dispatch: AppDispatch, user: User) => {
     console.log(res.data);
   } catch (err: any) {
     dispatch(registerFailure(err.message));
+    throw new Error(err.message);
     console.log(err.message);
+  }
+};
+
+export const login = async (dispatch: AppDispatch, user: User) => {
+  dispatch(loginStart());
+  try {
+    const res = await api.post("/auth/login", user);
+    dispatch(loginSucess(res.data));
+    console.log(res.data);
+  } catch (err: any) {
+    dispatch(loginFailure(err.message));
+    throw new Error(err.message);
+    console.log(err.response.data);
+  }
+};
+
+export const logout = async (dispatch: AppDispatch) => {
+  dispatch(logoutStart());
+  try {
+    dispatch(logoutSuccess(null));
+  } catch (err: any) {
+    dispatch(logoutFailure(err));
+    throw new Error(err.message);
+    console.log(err);
   }
 };
 
@@ -35,6 +66,7 @@ export const updateUser = async (
     console.log(res.data);
   } catch (err: any) {
     dispatch(updateUserFailure(err.message));
+    throw new Error(err.message);
     console.log(err.message);
   }
 };

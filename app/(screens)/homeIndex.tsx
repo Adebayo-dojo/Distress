@@ -10,8 +10,9 @@ import {
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import * as Burnt from "burnt";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { useBatteryLevel } from "expo-battery";
 import { MotiView } from "moti";
 import { Easing } from "react-native-reanimated";
@@ -21,17 +22,19 @@ import * as TaskManager from "expo-task-manager";
 import * as Brightness from "expo-brightness";
 import { getDatabase, ref, set } from "firebase/database";
 import { app } from "@/firebaseConfig";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+import { logout } from "@/redux/apiCalls";
+import { socket } from "@/socket";
 
 export default function HomeScreen() {
   const windowHeight = Dimensions.get("window").height;
   const [emergency, setEmergency] = useState(false);
   const [emergencyId, setEmergencyId] = useState();
-  const [receivedEmergency, setReceivedEmergency] = useState(true);
+  const [receivedEmergency, setReceivedEmergency] = useState(false);
   const [receivedEmergencies, setReceivedEmergencies] = useState<any[]>([]);
   const [toast, setToast] = useState(false);
-  const [mostRecentEmergency, setMostRecentEmergency] = useState();
+  // const [mostRecentEmergency, setMostRecentEmergency] = useState();
   const batteryLevel = useBatteryLevel();
   const [location, setLocation] = useState<Location.LocationObject>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,6 +47,7 @@ export default function HomeScreen() {
   const errorMessage = useSelector((state: RootState) =>
     state.user.error === null ? null : state.user.error
   );
+  const dispatch = useDispatch();
 
   const database = getDatabase(app);
 
@@ -101,6 +105,45 @@ export default function HomeScreen() {
     }, 3000);
   };
 
+  // useEffect(() => {
+  //   function onConnect() {
+  //     socket.emit("pollRequest", user?._id);
+  //   }
+
+  //   const storeEmergencies = (data: any) => {
+  //     if (data.error) {
+  //       socket.emit("pollRequest", user?._id);
+  //     } else {
+  //       const filteredData = data.filter(
+  //         (item: any) =>
+  //           !receivedEmergencies.some(
+  //             (existingItem) => existingItem._id === item._id
+  //           )
+  //       );
+  //       if (filteredData.length > 0) {
+  //         setReceivedEmergencies((existingData) => [
+  //           ...existingData,
+  //           ...filteredData,
+  //         ]);
+  //       }
+
+  //       setTimeout(() => {
+  //         console.log(receivedEmergencies);
+  //         socket.emit("pollRequest");
+  //       }, 2000);
+  //     }
+  //   };
+
+  //   socket.on("pollResponse", storeEmergencies);
+
+  //   socket.on("connect", onConnect);
+
+  //   return () => {
+  //     socket.off("connect", onConnect);
+  //     socket.off("pollResponse", storeEmergencies);
+  //   };
+  // }, []);
+
   const createEmergencyAlert = async () => {
     try {
       // const location = await requestLocation();
@@ -123,41 +166,41 @@ export default function HomeScreen() {
   //   }, 1000);
   // };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get(`/emergency/${user?._id}`);
-        const emergencies = res.data;
-        setReceivedEmergencies((prevData) => {
-          // Filter out items that already exist in the previous data
-          const uniqueNewData = emergencies.filter(
-            (newItem: any) =>
-              !prevData?.some((existingItem) => existingItem.id === newItem.id)
-          );
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const res = await api.get(`/emergency/${user?._id}`);
+  //       const emergencies = res.data;
+  //       setReceivedEmergencies((prevData) => {
+  //         // Filter out items that already exist in the previous data
+  //         const uniqueNewData = emergencies.filter(
+  //           (newItem: any) =>
+  //             !prevData?.some((existingItem) => existingItem.id === newItem.id)
+  //         );
 
-          // Combine the existing data with the unique new data
-          return [...prevData, ...uniqueNewData];
-        });
-      } catch (err) {
-        console.log(err, user?._id);
-      }
-    };
+  //         // Combine the existing data with the unique new data
+  //         return [...prevData, ...uniqueNewData];
+  //       });
+  //     } catch (err) {
+  //       console.log(err, user?._id);
+  //     }
+  //   };
 
-    // Fetch data every second
-    const intervalId = setInterval(fetchData, 1000);
+  //   // Fetch data every second
+  //   const intervalId = setInterval(fetchData, 1000);
 
-    // Clean up the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  //   // Clean up the interval on component unmount
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
-  useEffect(() => {
-    if (receivedEmergencies.length > 0) {
-      setMostRecentEmergency(
-        receivedEmergencies[receivedEmergencies.length - 1]
-      );
-      setReceivedEmergency(true);
-    }
-  }, [receivedEmergencies]);
+  // useEffect(() => {
+  //   if (receivedEmergencies.length > 0) {
+  //     setMostRecentEmergency(
+  //       receivedEmergencies[receivedEmergencies.length - 1]
+  //     );
+  //     setReceivedEmergency(true);
+  //   }
+  // }, [receivedEmergencies]);
 
   // useEffect(() => {
   //   let locationSub: Location.LocationSubscription;
@@ -180,6 +223,16 @@ export default function HomeScreen() {
   //     });
   //   }
   // }, [location, batteryLevel, emergency]);
+
+  const handleLogout = async () => {
+    try {
+      logout(dispatch);
+      router.replace("/(auth)");
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient
@@ -196,6 +249,12 @@ export default function HomeScreen() {
           height: windowHeight,
         }}
       />
+      <TouchableOpacity
+        style={{ alignSelf: "flex-end", paddingHorizontal: 12 }}
+        onPress={handleLogout}
+      >
+        <AntDesign name="logout" size={24} color="black" />
+      </TouchableOpacity>
       <View
         style={{
           flex: 1,

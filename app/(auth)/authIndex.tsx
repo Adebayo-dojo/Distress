@@ -17,7 +17,7 @@ import { Link, router } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { User } from "@/redux/slices/userSlice";
-import { register } from "@/redux/apiCalls";
+import { login, register } from "@/redux/apiCalls";
 
 export default function AuthIndex() {
   const windowHeight = Dimensions.get("window").height;
@@ -58,9 +58,11 @@ export default function AuthIndex() {
 
   const handleSubmit = async () => {
     try {
-      if (terms == true) {
-        register(dispatch, { ...values });
-      }
+      // if (terms == true) {
+      //   register(dispatch, { ...values });
+      // }
+      await login(dispatch, { ...values });
+      router.replace("/(screens)/screenIndex");
     } catch (err) {
       console.log(err);
     }
@@ -160,7 +162,7 @@ export default function AuthIndex() {
               }}
               onPress={handleSubmit}
             >
-              <Text
+              {/* <Text
                 style={{
                   color: "#7a7a7a",
                   fontSize: 15,
@@ -169,6 +171,16 @@ export default function AuthIndex() {
                 }}
               >
                 SUBMIT AND REGISTER
+              </Text> */}
+              <Text
+                style={{
+                  color: "#7a7a7a",
+                  fontSize: 15,
+                  fontWeight: "500",
+                  lineHeight: 22.5,
+                }}
+              >
+                LOGIN
               </Text>
             </TouchableOpacity>
             {/* </Link> */}

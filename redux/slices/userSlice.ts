@@ -56,6 +56,31 @@ export const userSlice = createSlice({
       state.error = action.payload;
       state.currentUser = null;
     },
+    loginStart: (state) => {
+      state.isFetching = true;
+    },
+    loginSucess: (state, action) => {
+      state.isFetching = false;
+      state.error = null;
+      state.currentUser = action.payload;
+    },
+    loginFailure: (state, action) => {
+      state.isFetching = false;
+      state.error = action.payload;
+      state.currentUser = null;
+    },
+    logoutStart: (state) => {
+      state.isFetching = true;
+    },
+    logoutSuccess: (state, action) => {
+      state.isFetching = false;
+      state.error = null;
+      state.currentUser = action.payload;
+    },
+    logoutFailure: (state, action) => {
+      state.isFetching = false;
+      state.error = action.payload;
+    },
     updateUserStart: (state) => {
       state.isFetching = true;
     },
@@ -76,6 +101,12 @@ export const {
   registerStart,
   registerSuccess,
   registerFailure,
+  loginStart,
+  loginSucess,
+  loginFailure,
+  logoutStart,
+  logoutSuccess,
+  logoutFailure,
   updateUserStart,
   updateUserSuccess,
   updateUserFailure,

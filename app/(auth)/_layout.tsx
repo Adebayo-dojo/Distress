@@ -5,17 +5,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 
 export default function AuthLayout() {
-  const user = useSelector((state: RootState) =>
-    state.user.currentUser === null ? null : state.user.currentUser
-  );
-  console.log(user);
   return (
     <Stack>
-      {!user ? (
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-      ) : (
-        <Stack.Screen name="permissions" options={{ headerShown: false }} />
-      )}
+      <Stack.Screen name="authIndex" options={{ headerShown: false }} />
+      <Stack.Screen name="permissions" options={{ headerShown: false }} />
       <Stack.Screen name="selectContacts" options={{ headerShown: false }} />
     </Stack>
   );
